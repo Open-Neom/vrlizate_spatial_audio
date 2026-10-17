@@ -3,5 +3,6 @@
 library;
 
 export 'package:vrlizate_world/vrlizate_world.dart' show VrWorldAddress;
+export 'src/vr_procedural_sfx.dart';
 export 'src/vr_proximity_audio_policy.dart';
 export 'src/vr_spatial_audio_evaluator.dart';
