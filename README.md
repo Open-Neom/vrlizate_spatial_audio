@@ -1,44 +1,52 @@
 # vrlizate_spatial_audio
 
-Pure Dart spatial audio policy for the VRlizate SDK. Depends on `vector_math`
-and the shared `vrlizate_world` address contract; importing it does not initialize a microphone, player, renderer,
-WebRTC connection, or Firebase service.
+Pure Dart spatial audio evaluator, acoustic zones, multi-emitter scene mixer, procedural foley SFX, and proximity policy for the **VRlizate SDK**. Depends on `vector_math` and the shared `vrlizate_world` address contract; importing it does not initialize a microphone, player, renderer, WebRTC connection, or Firebase service.
 
-`VrSpatialAudioEvaluator` computes the existing VRlizate distance-gain and stereo
-pan curve. `vrlizate_scene` re-exports it for compatibility. Positions are in a
-shared, Y-up coordinate space (normally meters), with -Z forward at zero yaw.
-The inverse-distance curve includes a linear fade to silence at `maxDistance`.
-It is stereo positioning, not binaural HRTF or simulated room acoustics.
+> Current version: **1.0.0**. See [CHANGELOG.md](CHANGELOG.md).
 
-`VrProximityAudioPolicy` additionally requires the same `VrWorldAddress` world and
-instance and explicit sender/listener consent. A muted or blocked participant
-produces zero gain. It only computes receiver-side audibility: the host must
-also enforce membership, media permissions, moderation and subscription limits
-at the transport/server boundary. Moving near a person never starts capture.
+## Components
+
+- **`VrSpatialAudioEvaluator`:** computes VRlizate's inverse-distance gain and horizontal stereo pan curve (`Y` up, `-Z` forward at zero yaw).
+- **`VrProximityAudioPolicy`:** enforces shared `VrWorldAddress` world/instance identity and explicit sender/listener consent before returning audible gain/pan.
+- **`VrAcousticEnvironment` & `VrAcousticZone`:** spherical environmental acoustic zones (`openAir`, `smallRoom`, `concertHall`, `corridor`, `underwater`, `cyberArena`) with reverb wet mix, low-pass cutoff Hz, and attenuation multipliers.
+- **`VrAudioSceneMixer`, `VrSpatialAudioEmitter`, `VrSpatialEmitterMix`:** evaluates multiple emitters against listener pose and active acoustic zones, culling silent sources and returning the top-N prioritized emitters.
+- **`VrProceduralSfx`:** zero-asset procedural sound synthesizer (`click`, `clack`, `whoosh`, `step`, `ding`, `pop`, `thump`, `heartbeat`) with stereo spatialization and 16-bit PCM WAV encoding.
 
 ```dart
+import 'package:vector_math/vector_math.dart' as vm;
+import 'package:vrlizate_spatial_audio/vrlizate_spatial_audio.dart';
+import 'package:vrlizate_world/vrlizate_world.dart';
+
 final plaza = VrWorldAddress(worldId: 'plaza', instanceId: 'public-01');
-final proximity = VrProximityAudioPolicy(maxDistance: 20);
-final (gain, pan) = proximity.evaluate(
-  sourceSpace: plaza,
-  listenerSpace: plaza,
-  source: avatarPosition,
-  listener: headPosition,
-  listenerYaw: headYaw,
-  sourceOptedIn: true,
-  listenerOptedIn: true,
+final mixer = VrAudioSceneMixer(maxActiveEmitters: 8)
+  ..addZone(
+    VrAcousticZone.fromEnvironment(
+      id: 'zone.hall',
+      world: plaza,
+      center: vm.Vector3.zero(),
+      radiusMeters: 30,
+      environment: VrAcousticEnvironment.concertHall,
+    ),
+  );
+
+final mixes = mixer.evaluateScene(
+  listenerWorld: plaza,
+  listenerPosition: vm.Vector3(0, 1.6, 0),
+  listenerYaw: 0,
+  emitters: [
+    VrSpatialAudioEmitter(
+      id: 'emitter.stage',
+      world: plaza,
+      position: vm.Vector3(4, 1.6, -6),
+      priority: 10,
+    ),
+  ],
 );
-// Apply gain/pan through the host's existing audio adapter.
 ```
 
-Playback remains in Open Neom modules: `neom_sound` owns effects, recording and
-SoLoud volume/pan controls; `neom_audio_player` owns long-form media; `neom_rooms`
-owns live WebRTC voice. The current Rooms interface still needs per-participant
-gain control; it does not yet expose stereo pan or a decoded-audio bridge. This
-package does not claim that live avatar voice is already integrated.
+## Validation
 
-For moving sources, update bounded nearby emitters and coalesce backend updates.
-Keep network pose traffic, audio-mix updates and rendering on independent rates.
-Stop/unsubscribe remote voice when leaving an instance; do not retain a silent
-stream as a substitute for authorization. Each room should release its own
-sound handles without deinitializing the shared Open Neom audio engine.
+```sh
+flutter analyze
+flutter test
+```

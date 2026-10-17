@@ -1,12 +1,12 @@
 name: vrlizate_spatial_audio
-description: Renderer-independent positional audio metrics and proximity policy for VRlizate.
-version: 0.1.0
-publish_to: none
+description: Renderer-independent positional audio metrics, acoustic zones, scene mixer, procedural SFX, and proximity policy for VRlizate.
+version: 1.0.0
+repository: https://github.com/Open-Neom/vrlizate_spatial_audio
 environment:
   sdk: ^3.10.8
 dependencies:
   vector_math: ^2.1.4
-  vrlizate_world: ^0.1.0
+  vrlizate_world: ^1.0.0
 dev_dependencies:
   test: ^1.25.0
   lints: ^5.0.0
