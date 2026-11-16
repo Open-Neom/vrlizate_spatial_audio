@@ -8,6 +8,6 @@
 - Extract deterministic PRNG `VrSfxRng` into its own utility class.
 - Preserve 100% backward-compatible barrel exports under `lib/src/` and `lib/vrlizate_spatial_audio.dart`.
 
-## 0.1.0 — Unreleased
+## 0.1.0 - local preview
 
 - Add `VrSpatialAudioEvaluator`, `VrProximityAudioPolicy`, and `VrProceduralSfx`.
