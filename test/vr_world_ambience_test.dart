@@ -34,7 +34,7 @@ void main() {
         expect(math.sqrt(energy / 96000), greaterThan(1500));
         distinct.add(base64Encode(wav));
       }
-      expect(distinct, hasLength(4));
+      expect(distinct, hasLength(VrWorldAmbienceKind.values.length));
     },
   );
 
